@@ -1,0 +1,38 @@
+name: Download MoneyPuck NHL Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_types:
+        description: 'Data types to download (season_level, game_by_game, shots, all)'
+        required: true
+        default: 'season_level'
+  schedule:
+    # Run weekly on Mondays at 6am UTC
+    - cron: '0 6 * * 1'
+
+jobs:
+  download-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Download MoneyPuck season-level data
+      run: python download_data.py
+      env:
+        PYTHONPATH: .
+    
+    - name: Commit and push downloaded data
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/
+        git diff --staged --quiet || git commit -m "Auto-update NHL data from MoneyPuck [skip ci]"
+        git push
